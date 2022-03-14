@@ -22,11 +22,11 @@ class MainWindow(QMainWindow):
 
     # Methods
 
-    def open(self):
-        self.filenames = QtWidgets.QFileDialog.getOpenFileName(
-            None, 'Load Signal', './', "(*.csv *.xls *.txt)")
-        path = self.filenames[0]
-        self.openfile(path)
+    # def open(self):
+    #     self.filenames = QtWidgets.QFileDialog.getOpenFileName(
+    #         None, 'Load Signal', './', "(*.csv *.xls *.txt)")
+    #     path = self.filenames[0]
+    #     self.openfile(path)
     def openFile(self):
         self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
         self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
