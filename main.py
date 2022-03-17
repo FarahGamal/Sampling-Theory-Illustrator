@@ -19,8 +19,9 @@ class MainWindow(QMainWindow):
     
         # Links of GUI Elements to Methods:
         #! Update 
+        self.ui.pushButton.setCheckable(True)
         self.ui.actionOpen.triggered.connect(lambda: self.openFile())
-
+        self.ui.pushButton.clicked.connect(lambda: self.showHideGraph())
     # Methods
 
     # def open(self):
@@ -36,6 +37,11 @@ class MainWindow(QMainWindow):
         #! Update 
         self.ui.graphicsView.plot(self.TimeReadings, self.AmplitudeReadings, pen=pyqtgraph.mkPen('b', width=1.5), symbol='o', symbolPen ='b', symbolBrush = 0.9)
     
+    def showHideGraph(self):
+        if self.ui.pushButton.isChecked():
+            self.ui.graphicsView_2.hide()
+        else:
+            self.ui.graphicsView_2.show()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
