@@ -1,3 +1,4 @@
+
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -33,7 +34,7 @@ class MainWindow(QMainWindow):
         self.TimeReadings = self.data_frame.iloc[:,0].to_numpy()
         self.AmplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
         #! Update 
-        self.ui.graphicsView.plot(self.TimeReadings, self.AmplitudeReadings, pen=pyqtgraph.mkPen('r', width=1.5))
+        self.ui.graphicsView.plot(self.TimeReadings, self.AmplitudeReadings, pen=pyqtgraph.mkPen('b', width=1.5), symbol='o', symbolPen ='b', symbolBrush = 0.9)
     
 
 if __name__ == '__main__':
