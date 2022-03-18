@@ -22,6 +22,8 @@ class MainWindow(QMainWindow):
         self.ui.pushButton.setCheckable(True)
         self.ui.actionOpen.triggered.connect(lambda: self.openFile())
         self.ui.pushButton.clicked.connect(lambda: self.showHideGraph())
+        #! Make it ratio from fmax
+        self.ui.horizontalSlider.valueChanged['int'].connect(self.ui.lcdNumber.display)
     # Methods
 
     # def open(self):
