@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QSplitter" name="splitter">
+     <widget class="QSplitter" name="mainAndReconstructioAndSummationAndComposerSplitter">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -24,9 +24,9 @@
        <number>20</number>
       </property>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QGridLayout" name="gridLayout_7">
+       <layout class="QGridLayout" name="mainAndReconstructedGraphGridLayout">
         <item row="0" column="0">
-         <widget class="PlotWidget" name="graphicsView">
+         <widget class="PlotWidget" name="mainGraphicsView">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -42,7 +42,7 @@
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="PlotWidget" name="graphicsView_2">
+         <widget class="PlotWidget" name="reconstrucedGraphicsView">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -52,19 +52,19 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <layout class="QGridLayout" name="gridLayout_4">
+         <layout class="QGridLayout" name="sliderAndshowHideGridLayout">
           <item row="0" column="0">
-           <widget class="QSlider" name="horizontalSlider">
+           <widget class="QSlider" name="samplingHorizontalSlider">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLCDNumber" name="lcdNumber"/>
+           <widget class="QLCDNumber" name="frequencyLcdNumber"/>
           </item>
           <item row="0" column="2">
-           <widget class="QLabel" name="label_5">
+           <widget class="QLabel" name="maximumFrequencyLabel">
             <property name="font">
              <font>
               <family>Garamond</family>
@@ -79,7 +79,7 @@
            </widget>
           </item>
           <item row="0" column="3">
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="showHidePushButton">
             <property name="text">
              <string>Show/Hide</string>
             </property>
@@ -90,9 +90,9 @@
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QGridLayout" name="gridLayout_8">
+       <layout class="QGridLayout" name="composerAndSummationGridLayout">
         <item row="1" column="0">
-         <spacer name="horizontalSpacer_2">
+         <spacer name="composerAndSummationHorizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -108,7 +108,7 @@
          </spacer>
         </item>
         <item row="2" column="0">
-         <spacer name="verticalSpacer">
+         <spacer name="composerAndSummationVerticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
@@ -124,19 +124,19 @@
          </spacer>
         </item>
         <item row="0" column="0">
-         <widget class="PlotWidget" name="graphicsView_3"/>
+         <widget class="PlotWidget" name="composerGraphicsView"/>
         </item>
         <item row="3" column="0">
-         <widget class="PlotWidget" name="graphicsView_4"/>
+         <widget class="PlotWidget" name="summationGraphicsView"/>
         </item>
        </layout>
       </widget>
      </widget>
     </item>
     <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_9">
+     <layout class="QGridLayout" name="twoGroupBoxesGridLayout">
       <item row="1" column="0">
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="composerGroupBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -144,11 +144,11 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>GroupBox</string>
+         <string>Composer Controls</string>
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="frequencyLabel">
            <property name="text">
             <string>Frequency</string>
            </property>
@@ -158,10 +158,10 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="lineEdit"/>
+          <widget class="QLineEdit" name="frequencyLineEdit"/>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="amplitudeLabel">
            <property name="text">
             <string>Amplitude</string>
            </property>
@@ -171,10 +171,10 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="lineEdit_2"/>
+          <widget class="QLineEdit" name="amplotudeLineEdit"/>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_3">
+          <widget class="QLabel" name="phaseShiftLabel">
            <property name="text">
             <string>Phase Shift</string>
            </property>
@@ -184,19 +184,19 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QLineEdit" name="lineEdit_3"/>
+          <widget class="QLineEdit" name="phaseShiftLineEdit"/>
          </item>
          <item row="3" column="0" colspan="2">
-          <widget class="QPushButton" name="pushButton_2">
+          <widget class="QPushButton" name="plotPushButton">
            <property name="text">
-            <string>Add</string>
+            <string>Plot</string>
            </property>
           </widget>
          </item>
          <item row="4" column="0" colspan="2">
-          <widget class="QPushButton" name="pushButton_5">
+          <widget class="QPushButton" name="addPushButton">
            <property name="text">
-            <string>Confirm</string>
+            <string>Add</string>
            </property>
           </widget>
          </item>
@@ -204,7 +204,7 @@
        </widget>
       </item>
       <item row="4" column="0">
-       <widget class="QGroupBox" name="groupBox_2">
+       <widget class="QGroupBox" name="summationGraphGroupBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -212,18 +212,18 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>GroupBox</string>
+         <string>Summation Graph Controls</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_6">
          <item row="3" column="0">
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="savePushButton">
            <property name="text">
             <string>Save</string>
            </property>
           </widget>
          </item>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="signalDeletionLabel">
            <property name="text">
             <string>Select Signal to Delete</string>
            </property>
@@ -233,17 +233,17 @@
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QPushButton" name="pushButton_4">
+          <widget class="QPushButton" name="confirmPushButton">
            <property name="text">
             <string>Confirm</string>
            </property>
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QComboBox" name="comboBox"/>
+          <widget class="QComboBox" name="deleteSignalComboBox"/>
          </item>
          <item row="2" column="0">
-          <widget class="QPushButton" name="pushButton_6">
+          <widget class="QPushButton" name="deletePushButton">
            <property name="text">
             <string>Delete</string>
            </property>
@@ -253,7 +253,7 @@
        </widget>
       </item>
       <item row="2" column="0">
-       <spacer name="horizontalSpacer">
+       <spacer name="composerSummationGroupBoxHorizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -269,7 +269,7 @@
        </spacer>
       </item>
       <item row="5" column="0">
-       <spacer name="verticalSpacer_5">
+       <spacer name="summationGoupBoxVerticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
@@ -282,7 +282,7 @@
        </spacer>
       </item>
       <item row="3" column="0">
-       <spacer name="verticalSpacer_3">
+       <spacer name="verticalSpacerBetweenComposerAndSummationGroupBox">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
@@ -295,7 +295,7 @@
        </spacer>
       </item>
       <item row="0" column="0">
-       <spacer name="verticalSpacer_4">
+       <spacer name="composerGroupBoxVerticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
