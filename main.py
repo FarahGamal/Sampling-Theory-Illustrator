@@ -1,5 +1,6 @@
 
 import sys
+from time import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 import pyqtgraph
@@ -9,6 +10,10 @@ from GUI import Ui_MainWindow
 import csv
 import numpy as np
 
+SignalsCounter = -1
+
+
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -17,6 +22,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         # Variables Initialization
+        global time
         self.time = np.linspace(-2.5, 2.5, 1000)
         self.added_composer_signals=0
         self.added_signals_list=[]
@@ -32,6 +38,7 @@ class MainWindow(QMainWindow):
         self.ui.add_button.clicked.connect(self.signal_summation)
         self.ui.delete_button.clicked.connect(self.signal_deletion)
         self.ui.comboBox.activated.connect(self.select_signal)
+        self.ui.saveButton_3.clicked.connect(self.save_signal)
         #! Make it ratio from fmax
         self.ui.horizontalSlider.valueChanged['int'].connect(self.ui.lcdNumber.display)
     # Methods
@@ -58,13 +65,14 @@ class MainWindow(QMainWindow):
             self.ui.graphicsView_2.show()
 
     def signal_composer(self):
+        global SignalsCounter
         self.ui.graphicsView_3.clear()
         self.frequency= float(self.ui.lineEdit.text())
         self.amplitude= float(self.ui.lineEdit_2.text()) 
         self.phase_shift= float(self.ui.lineEdit_3.text())
         self.signal = self.amplitude * np.sin(2 * np.pi * self.frequency * self.time + self.phase_shift)
         self.ui.graphicsView_3.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
-        
+        SignalsCounter = SignalsCounter + 1
 
     def signal_summation(self):
         self.added_composer_signals+=self.signal
@@ -91,6 +99,11 @@ class MainWindow(QMainWindow):
         else:
             self.added_composer_signals-=self.signal_to_delete
             self.ui.graphicsView_4.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+    
+    def save_signal(self):  
+        SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
+        np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",") 
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
