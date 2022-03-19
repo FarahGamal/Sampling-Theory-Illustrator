@@ -2,7 +2,7 @@
 import sys
 from time import time
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 import pyqtgraph
 from pyqtgraph import PlotWidget
 import pandas as pd
@@ -70,6 +70,9 @@ class MainWindow(QMainWindow):
         self.frequency= float(self.ui.lineEdit.text())
         self.amplitude= float(self.ui.lineEdit_2.text()) 
         self.phase_shift= float(self.ui.lineEdit_3.text())
+        if self.amplitude <=0:
+                self.show_pop_up_msg("The amplitude has to be greater than zero")
+
         self.signal = self.amplitude * np.sin(2 * np.pi * self.frequency * self.time + self.phase_shift)
         self.ui.graphicsView_3.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
         SignalsCounter = SignalsCounter + 1
@@ -103,6 +106,12 @@ class MainWindow(QMainWindow):
     def save_signal(self):  
         SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
         np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",") 
+
+    def show_pop_up_msg(self,the_message):
+        msg=QMessageBox()
+        msg.setWindowTitle("ERROR!!")
+        msg.setText(the_message)
+        show= msg.exec_()
 
 
 if __name__ == '__main__':
