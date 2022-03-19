@@ -25,7 +25,40 @@
       </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="mainAndReconstructedGraphGridLayout">
-        <item row="0" column="0">
+        <item row="2" column="0">
+         <layout class="QGridLayout" name="sliderAndshowHideGridLayout">
+          <item row="0" column="2">
+           <widget class="QPushButton" name="showHidePushButton">
+            <property name="text">
+             <string>Show/Hide</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QSlider" name="samplingHorizontalSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="maximumFrequencyLabel">
+            <property name="font">
+             <font>
+              <family>Garamond</family>
+              <pointsize>10</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Fmax</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0">
          <widget class="PlotWidget" name="mainGraphicsView">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -41,7 +74,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="PlotWidget" name="reconstrucedGraphicsView">
           <property name="enabled">
            <bool>true</bool>
@@ -51,60 +84,49 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <layout class="QGridLayout" name="sliderAndshowHideGridLayout">
-          <item row="0" column="1">
-           <widget class="QLabel" name="maximumFrequencyLabel">
-            <property name="font">
-             <font>
-              <family>Garamond</family>
-              <pointsize>10</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>fmax</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="showHidePushButton">
-            <property name="text">
-             <string>Show/Hide</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QSlider" name="samplingHorizontalSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
+        <item row="0" column="0">
+         <widget class="QLabel" name="mainGraphLabel">
+          <property name="font">
+           <font>
+            <family>Georgia</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Main Graph</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="reconstructedSignalGraphLabel">
+          <property name="font">
+           <font>
+            <family>Georgia</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Reconstructed Signal</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="composerAndSummationGridLayout">
-        <item row="1" column="0">
-         <spacer name="composerAndSummationHorizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Preferred</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>150</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+        <item row="5" column="0">
+         <widget class="PlotWidget" name="summationGraphicsView"/>
         </item>
-        <item row="2" column="0">
+        <item row="1" column="0">
+         <widget class="PlotWidget" name="composerGraphicsView"/>
+        </item>
+        <item row="3" column="0">
          <spacer name="composerAndSummationVerticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -120,11 +142,53 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="0">
-         <widget class="PlotWidget" name="composerGraphicsView"/>
+        <item row="2" column="0">
+         <spacer name="composerAndSummationHorizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Preferred</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>150</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
-        <item row="3" column="0">
-         <widget class="PlotWidget" name="summationGraphicsView"/>
+        <item row="0" column="0">
+         <widget class="QLabel" name="composerGraphLabel">
+          <property name="font">
+           <font>
+            <family>Georgia</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Signal Composer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="summatedSignalGraphLabel">
+          <property name="font">
+           <font>
+            <family>Georgia</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Summated Signal</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -132,73 +196,21 @@
     </item>
     <item row="0" column="1">
      <layout class="QGridLayout" name="twoGroupBoxesGridLayout">
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="composerGroupBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+      <item row="2" column="0">
+       <spacer name="composerSummationGroupBoxHorizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="title">
-         <string>Composer Controls</string>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
         </property>
-        <layout class="QFormLayout" name="formLayout">
-         <item row="0" column="0">
-          <widget class="QLabel" name="frequencyLabel">
-           <property name="text">
-            <string>Frequency</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="frequencyLineEdit"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="amplitudeLabel">
-           <property name="text">
-            <string>Amplitude</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="amplotudeLineEdit"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="phaseShiftLabel">
-           <property name="text">
-            <string>Phase Shift</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="phaseShiftLineEdit"/>
-         </item>
-         <item row="3" column="0" colspan="2">
-          <widget class="QPushButton" name="plotPushButton">
-           <property name="text">
-            <string>Plot</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QPushButton" name="addPushButton">
-           <property name="text">
-            <string>Add</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item row="4" column="0">
        <widget class="QGroupBox" name="summationGraphGroupBox">
@@ -208,8 +220,13 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
         <property name="title">
-         <string>Summation Graph Controls</string>
+         <string>Summated Signal Controls</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_6">
          <item row="3" column="0">
@@ -249,35 +266,6 @@
         </layout>
        </widget>
       </item>
-      <item row="2" column="0">
-       <spacer name="composerSummationGroupBoxHorizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Preferred</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="5" column="0">
-       <spacer name="summationGoupBoxVerticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
       <item row="3" column="0">
        <spacer name="verticalSpacerBetweenComposerAndSummationGroupBox">
         <property name="orientation">
@@ -303,6 +291,106 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="5" column="0">
+       <spacer name="summationGoupBoxVerticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="composerGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+        <property name="title">
+         <string>Signal Composer Controls</string>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="frequencyLabel">
+           <property name="text">
+            <string>Frequency</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="amplitudeLabel">
+           <property name="text">
+            <string>Amplitude</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="phaseShiftLabel">
+           <property name="text">
+            <string>Phase Shift</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="2">
+          <widget class="QPushButton" name="plotPushButton">
+           <property name="text">
+            <string>Plot</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QPushButton" name="addPushButton">
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="frequencyDoubleSpinBox">
+           <property name="value">
+            <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="amplitudeDoubleSpinBox">
+           <property name="maximum">
+            <double>99.989999999999995</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
+           </property>
+           <property name="value">
+            <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="phaseShiftDoubleSpinBox"/>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </item>

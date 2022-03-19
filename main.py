@@ -14,8 +14,11 @@ from scipy import signal
 from scipy.special import sinc
 import math
 import scipy
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 SignalsCounter = -1
+composedSignalIsPlotted= False
+signalSumIsPlotted= False
 
 class MainWindow(QMainWindow):
 
@@ -57,9 +60,14 @@ class MainWindow(QMainWindow):
         # self.amplitudeReadings = 1*np.cos(2 * np.pi * 2 * (self.timeReadings)) + 1*np.cos(2 * np.pi * 6 * (self.timeReadings))
     # Methods
 
-    def save_signal(self):  
-        SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
-        np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",") 
+
+    def save_signal(self):
+        global signalSumIsPlotted
+        if signalSumIsPlotted==False:
+            self.show_pop_up_msg("No Signal to Save! ")  
+        else:    
+            SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
+            np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",")
 
     def openFile(self):
         self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
@@ -149,48 +157,72 @@ class MainWindow(QMainWindow):
     def showHideGraph(self):
         if self.ui.showHidePushButton.isChecked():
             self.ui.reconstrucedGraphicsView.hide()
+            self.ui.reconstructedSignalGraphLabel.hide()
         else:
             self.ui.reconstrucedGraphicsView.show()
+            self.ui.reconstructedSignalGraphLabel.show()
 
     def signal_composer(self):
         global SignalsCounter
+        global composedSignalIsPlotted
+        global SignalsCounter
         self.ui.composerGraphicsView.clear()
-        self.frequency= float(self.ui.frequencyLineEdit.text())
-        self.amplitude= float(self.ui.amplotudeLineEdit.text()) 
-        self.phase_shift= float(self.ui.phaseShiftLineEdit.text()) * (np.pi/180)
-        self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
-        self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
-        self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
-        self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
-        SignalsCounter = SignalsCounter + 1
+        self.frequency= float(self.ui.frequencyDoubleSpinBox.text())
+        self.amplitude= float(self.ui.amplitudeDoubleSpinBox.text()) 
+        self.phase_shift= float(self.ui.phaseShiftDoubleSpinBox.text()) * (np.pi/180)
+        if self.amplitude <=0:
+                self.show_pop_up_msg("The amplitude has to be greater than zero")
+        else:
+            self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
+            self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
+            self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
+            self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
+            SignalsCounter = SignalsCounter + 1
+            composedSignalIsPlotted= True
 
     def signal_summation(self):
-        self.added_composer_signals+=self.signal
-         #frequency stored in a list for later sampling
-        # self.added_composer_signals_frequency.append(self.frequency)
-        self.added_signals_list.append(self.signal)
-        self.ui.deleteSignalComboBox.addItem('F='+ str(self.frequency)+ 'A=' +str(self.amplitude) + 'PS='+ str(self.phase_shift))
-        self.ui.summationGraphicsView.clear() #adjust it to the right graph
-        # self.ui.graphicsView_4.plot(self.time, signal1+signal2, pen=pyqtgraph.mkPen('r', width=1.5))
-        self.ui.summationGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.time), yMin=np.min(self.added_composer_signals) - 0.2, yMax=np.max(self.added_composer_signals) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.added_composer_signals) + 0.2)-((np.min(self.added_composer_signals) - 0.2)))
-        self.ui.summationGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.added_composer_signals) - 0.2, np.max(self.added_composer_signals) + 0.2), padding=0)
-        self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
-       
+        global signalSumIsPlotted
+        if composedSignalIsPlotted == True:
+            self.added_composer_signals+=self.signal
+            #frequency stored in a list for later sampling
+            # self.added_composer_signals_frequency.append(self.frequency)
+            self.added_signals_list.append(self.signal)
+            self.ui.deleteSignalComboBox.addItem('F='+ str(self.frequency)+ 'A=' +str(self.amplitude) + 'PS='+ str(self.phase_shift))
+            self.ui.summationGraphicsView.clear() #adjust it to the right graph
+            # self.ui.graphicsView_4.plot(self.time, signal1+signal2, pen=pyqtgraph.mkPen('r', width=1.5))
+            self.ui.summationGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.time), yMin=np.min(self.added_composer_signals) - 0.2, yMax=np.max(self.added_composer_signals) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.added_composer_signals) + 0.2)-((np.min(self.added_composer_signals) - 0.2)))
+            self.ui.summationGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.added_composer_signals) - 0.2, np.max(self.added_composer_signals) + 0.2), padding=0)
+            self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+        elif composedSignalIsPlotted== False: 
+         self.show_pop_up_msg("No Signal is Plotted! ")
+
         #get maximum frequency for sampling
         # maximum_frequency=np.max(self.added_composer_signals_frequency)
 
     def select_signal(self):
         self.signal_index=self.ui.deleteSignalComboBox.currentIndex()
+
     def signal_deletion(self):
-        self.ui.summationGraphicsView.clear()
-        self.signal_to_delete=self.added_signals_list.pop(self.signal_index)
-        # self.added_composer_signals_frequency.pop(self.signal_index)
-        self.ui.deleteSignalComboBox.removeItem(self.signal_index)
-        if self.ui.deleteSignalComboBox.count()==0:
-            self.ui.summationGraphicsView.clear()
+        global signalSumIsPlotted
+
+        if signalSumIsPlotted==False:
+            self.show_pop_up_msg("No Signal to Delete! ")
         else:
-            self.added_composer_signals-=self.signal_to_delete
-            self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+            self.ui.summationGraphicsView.clear()
+            self.signal_to_delete=self.added_signals_list.pop(self.signal_index)
+            # self.added_composer_signals_frequency.pop(self.signal_index)
+            self.ui.deleteSignalComboBox.removeItem(self.signal_index)
+            if self.ui.deleteSignalComboBox.count()==0:
+                self.ui.summationGraphicsView.clear()
+            else:
+                self.added_composer_signals-=self.signal_to_delete
+                self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+
+    def show_pop_up_msg(self,the_message):
+        msg=QMessageBox()
+        msg.setWindowTitle("ERROR!!")
+        msg.setText(the_message)
+        show= msg.exec_()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
