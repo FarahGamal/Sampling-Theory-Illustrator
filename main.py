@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         # self.added_composer_signals_frequency=[]
         self.signal_index=None
         self.signal_to_delete=None
+        self.isOpen = False
         # Links of GUI Elements to Methods:
         self.ui.showHidePushButton.setCheckable(True)
         self.ui.actionOpen.triggered.connect(lambda: self.openFile())
@@ -40,7 +41,6 @@ class MainWindow(QMainWindow):
         self.ui.addPushButton.clicked.connect(self.signal_summation)
         self.ui.deletePushButton.clicked.connect(self.signal_deletion)
         self.ui.deleteSignalComboBox.activated.connect(self.select_signal)
-        #! Make it ratio from fmax
         self.ui.samplingHorizontalSlider.setMinimum(0)
         self.ui.samplingHorizontalSlider.setMaximum(9)
         self.ui.mainGraphicsView.showGrid(x=True, y=True, alpha=0.5)
@@ -56,12 +56,6 @@ class MainWindow(QMainWindow):
         # self.amplitudeReadings = 1*np.cos(2 * np.pi * 2 * (self.timeReadings)) + 1*np.cos(2 * np.pi * 6 * (self.timeReadings))
     # Methods
 
-    # def open(self):
-    #     self.filenames = QtWidgets.QFileDialog.getOpenFileName(
-    #         None, 'Load Signal', './', "(*.csv *.xls *.txt)")
-    #     path = self.filenames[0]
-    #     self.openfile(path)
-
     def save_signal(self):  
         SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
         np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",") 
@@ -72,11 +66,17 @@ class MainWindow(QMainWindow):
         self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
         self.amplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
         self.plot()
+        self.isOpen = True
 
     def confirm(self):
         self.timeReadings = self.time
         self.amplitudeReadings = self.added_composer_signals
         self.plot()
+        self.isOpen = True
+        self.ui.reconstrucedGraphicsView.clear()
+        self.ui.samplingHorizontalSlider.setValue(0)
+        self.ui.maximumFrequencyLabel.setText('0 fmax')
+
 
     def plot(self):
         # self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
@@ -129,11 +129,17 @@ class MainWindow(QMainWindow):
         resampledAmplitude, samplingInterval = self.ResampleSignal(timeReadings, amplitudeReadings, maximumFrequencyRatio)
         reconstructedAmplitude = [resampledAmplitude[discreteTimestep] * sinc( (timeReadings - discreteTimestep*samplingInterval) / samplingInterval ) for discreteTimestep in range(-len(resampledAmplitude), len(resampledAmplitude))]
         reconstructedAmplitude = np.sum(reconstructedAmplitude, axis=0)
+        self.ui.reconstrucedGraphicsView.setLimits(xMin=np.min(self.timeReadings), xMax=np.max(self.timeReadings), yMin=np.min(reconstructedAmplitude) - 0.2, yMax=np.max(reconstructedAmplitude) + 0.2, minXRange=0.1, maxXRange=np.max(self.timeReadings) - np.min(self.timeReadings), minYRange=0.1, maxYRange=(np.max(reconstructedAmplitude) + 0.2)-((np.min(reconstructedAmplitude) - 0.2)))
+        self.ui.reconstrucedGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(reconstructedAmplitude) - 0.2, np.max(reconstructedAmplitude) + 0.2), padding=0)
         self.ui.reconstrucedGraphicsView.clear()
         self.ui.reconstrucedGraphicsView.plot(timeReadings, reconstructedAmplitude, pen=pyqtgraph.mkPen('b', width=1.5))
 
     def ResampleAndReconstructSignalBasedOnSliderValue(self,sliderValue):
-        if sliderValue == 0: return
+        if self.isOpen == False: return
+        if sliderValue == 0:
+            self.ui.reconstrucedGraphicsView.clear()
+            self.ui.maximumFrequencyLabel.setText('0 fmax')
+            return
         maximumFrequencyRatio = round(sliderValue/3, 3)
         self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
         self.ReconstructSignal(self.timeReadings, self.amplitudeReadings, maximumFrequencyRatio)
@@ -151,6 +157,8 @@ class MainWindow(QMainWindow):
         self.amplitude= float(self.ui.amplotudeLineEdit.text()) 
         self.phase_shift= float(self.ui.phaseShiftLineEdit.text()) * (np.pi/180)
         self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
+        self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
+        self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
         self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
         SignalsCounter = SignalsCounter + 1
 
@@ -162,6 +170,8 @@ class MainWindow(QMainWindow):
         self.ui.deleteSignalComboBox.addItem('F='+ str(self.frequency)+ 'A=' +str(self.amplitude) + 'PS='+ str(self.phase_shift))
         self.ui.summationGraphicsView.clear() #adjust it to the right graph
         # self.ui.graphicsView_4.plot(self.time, signal1+signal2, pen=pyqtgraph.mkPen('r', width=1.5))
+        self.ui.summationGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.time), yMin=np.min(self.added_composer_signals) - 0.2, yMax=np.max(self.added_composer_signals) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.added_composer_signals) + 0.2)-((np.min(self.added_composer_signals) - 0.2)))
+        self.ui.summationGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.added_composer_signals) - 0.2, np.max(self.added_composer_signals) + 0.2), padding=0)
         self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
        
         #get maximum frequency for sampling
