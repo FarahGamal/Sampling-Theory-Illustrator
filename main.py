@@ -41,7 +41,6 @@ class MainWindow(QMainWindow):
         self.ui.deletePushButton.clicked.connect(self.signal_deletion)
         self.ui.deleteSignalComboBox.activated.connect(self.select_signal)
         #! Make it ratio from fmax
-        self.ui.samplingHorizontalSlider.valueChanged['int'].connect(self.ui.frequencyLcdNumber.display)
         self.ui.samplingHorizontalSlider.setMinimum(0)
         self.ui.samplingHorizontalSlider.setMaximum(9)
         self.ui.mainGraphicsView.showGrid(x=True, y=True, alpha=0.5)
@@ -125,7 +124,7 @@ class MainWindow(QMainWindow):
     def ResampleAndReconstructSignalBasedOnSliderValue(self,sliderValue):
         if sliderValue == 0: return
         maximumFrequencyRatio = round(sliderValue/3, 3)
-        # TODO: Set maximumFrequencyRatio in frequencyLcdNumber
+        self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
         self.ReconstructSignal(self.timeReadings, self.amplitudeReadings, maximumFrequencyRatio)
 
     def showHideGraph(self):
