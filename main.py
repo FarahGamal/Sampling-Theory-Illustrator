@@ -210,6 +210,7 @@ class MainWindow(QMainWindow):
             # self.added_composer_signals_frequency.pop(self.signal_index)
             self.ui.deleteSignalComboBox.removeItem(self.signal_index)
             if self.ui.deleteSignalComboBox.count()==0:
+                self.added_composer_signals = 0
                 self.ui.summationGraphicsView.clear()
                 signalSumIsPlotted= False
             else:
