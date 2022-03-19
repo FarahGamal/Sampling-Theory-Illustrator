@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         self.signal_index=None
         self.signal_to_delete=None
         self.isOpen = False
+        self.noDots = False
         # Links of GUI Elements to Methods:
         self.ui.showHidePushButton.setCheckable(True)
         self.ui.actionOpen.triggered.connect(lambda: self.openFile())
@@ -139,6 +140,7 @@ class MainWindow(QMainWindow):
         if sliderValue == 0:
             self.ui.reconstrucedGraphicsView.clear()
             self.ui.maximumFrequencyLabel.setText('0 fmax')
+            self.plot()
             return
         maximumFrequencyRatio = round(sliderValue/3, 3)
         self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
