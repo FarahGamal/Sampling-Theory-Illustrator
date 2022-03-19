@@ -170,15 +170,12 @@ class MainWindow(QMainWindow):
         self.frequency= float(self.ui.frequencyDoubleSpinBox.text())
         self.amplitude= float(self.ui.amplitudeDoubleSpinBox.text()) 
         self.phase_shift= float(self.ui.phaseShiftDoubleSpinBox.text()) * (np.pi/180)
-        if self.amplitude <=0:
-                self.show_pop_up_msg("The amplitude has to be greater than zero")
-        else:
-            self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
-            self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
-            self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
-            self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
-            SignalsCounter = SignalsCounter + 1
-            composedSignalIsPlotted= True
+        self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
+        self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
+        self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
+        self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
+        SignalsCounter = SignalsCounter + 1
+        composedSignalIsPlotted= True
 
     def signal_summation(self):
         global signalSumIsPlotted
@@ -193,8 +190,9 @@ class MainWindow(QMainWindow):
             self.ui.summationGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.time), yMin=np.min(self.added_composer_signals) - 0.2, yMax=np.max(self.added_composer_signals) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.added_composer_signals) + 0.2)-((np.min(self.added_composer_signals) - 0.2)))
             self.ui.summationGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.added_composer_signals) - 0.2, np.max(self.added_composer_signals) + 0.2), padding=0)
             self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+            signalSumIsPlotted= True
         elif composedSignalIsPlotted== False: 
-         self.show_pop_up_msg("No Signal is Plotted! ")
+            self.show_pop_up_msg("No Signal is Plotted! ")
 
         #get maximum frequency for sampling
         # maximum_frequency=np.max(self.added_composer_signals_frequency)
@@ -204,7 +202,6 @@ class MainWindow(QMainWindow):
 
     def signal_deletion(self):
         global signalSumIsPlotted
-
         if signalSumIsPlotted==False:
             self.show_pop_up_msg("No Signal to Delete! ")
         else:
@@ -214,9 +211,11 @@ class MainWindow(QMainWindow):
             self.ui.deleteSignalComboBox.removeItem(self.signal_index)
             if self.ui.deleteSignalComboBox.count()==0:
                 self.ui.summationGraphicsView.clear()
+                signalSumIsPlotted= False
             else:
                 self.added_composer_signals-=self.signal_to_delete
                 self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
+                
 
     def show_pop_up_msg(self,the_message):
         msg=QMessageBox()
