@@ -51,6 +51,7 @@ class MainWindow(QMainWindow):
         self.timeReadings = []
         self.amplitudeReadings = []
         self.ui.savePushButton.clicked.connect(self.save_signal)
+        self.ui.confirmPushButton.clicked.connect(self.confirm)
         # self.timeReadings = np.linspace(-2,2,2000, endpoint=False)
         # self.amplitudeReadings = 1*np.cos(2 * np.pi * 2 * (self.timeReadings)) + 1*np.cos(2 * np.pi * 6 * (self.timeReadings))
     # Methods
@@ -65,13 +66,23 @@ class MainWindow(QMainWindow):
         SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
         np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",") 
 
-
-
     def openFile(self):
         self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
         self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
         self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
         self.amplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
+        self.plot()
+
+    def confirm(self):
+        self.timeReadings = self.time
+        self.amplitudeReadings = self.added_composer_signals
+        self.plot()
+
+    def plot(self):
+        # self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
+        # self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
+        # self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
+        # self.amplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
 
         self.ui.mainGraphicsView.setLimits(xMin=np.min(self.timeReadings), xMax=np.max(self.timeReadings), yMin=np.min(self.amplitudeReadings) - 0.2, yMax=np.max(self.amplitudeReadings) + 0.2, minXRange=0.1, maxXRange=np.max(self.timeReadings) - np.min(self.timeReadings), minYRange=0.1, maxYRange=(np.max(self.amplitudeReadings) + 0.2)-((np.min(self.amplitudeReadings) - 0.2)))
         self.ui.mainGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.amplitudeReadings) - 0.2, np.max(self.amplitudeReadings) + 0.2), padding=0)
