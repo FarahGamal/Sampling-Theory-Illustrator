@@ -65,8 +65,13 @@ class MainWindow(QMainWindow):
         else:    
             SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
             np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",")
+    
+    def reset_slider_and_graph(self):
+        self.ui.reconstrucedGraphicsView.clear()
+        self.ui.samplingHorizontalSlider.setValue(0)
 
     def openFile(self):
+        self.reset_slider_and_graph()
         self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
         self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
         self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
@@ -75,13 +80,15 @@ class MainWindow(QMainWindow):
         self.isOpen = True
 
     def confirm(self):
-        self.timeReadings = self.time
-        self.amplitudeReadings = self.added_composer_signals
-        self.plot()
-        self.isOpen = True
-        self.ui.reconstrucedGraphicsView.clear()
-        self.ui.samplingHorizontalSlider.setValue(0)
-        self.ui.maximumFrequencyLabel.setText('0 fmax')
+        if signalSumIsPlotted==False:
+            self.show_pop_up_msg("No Signal to Sample! ")
+        else:
+            self.timeReadings = self.time
+            self.amplitudeReadings = self.added_composer_signals
+            self.plot()
+            self.isOpen = True
+            self.reset_slider_and_graph()
+            self.ui.maximumFrequencyLabel.setText('0 fmax')
 
 
     def plot(self):
@@ -142,7 +149,7 @@ class MainWindow(QMainWindow):
             self.plot()
             return
         maximumFrequencyRatio = round(sliderValue/3, 3)
-        self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
+        self.ui.maximumFrequencyLabel.setText(f'{int(maximumFrequencyRatio)} fmax')
         self.ReconstructSignal(self.timeReadings, self.amplitudeReadings, maximumFrequencyRatio)
 
     def showHideGraph(self):

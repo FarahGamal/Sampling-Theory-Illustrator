@@ -355,7 +355,7 @@
          <item row="3" column="0" colspan="2">
           <widget class="QPushButton" name="plotPushButton">
            <property name="text">
-            <string>Plot</string>
+            <string>Preview</string>
            </property>
           </widget>
          </item>
@@ -387,7 +387,14 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="phaseShiftDoubleSpinBox"/>
+          <widget class="QDoubleSpinBox" name="phaseShiftDoubleSpinBox">
+           <property name="minimum">
+            <double>-360.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>360.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
