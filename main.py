@@ -1,4 +1,3 @@
-
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -28,15 +27,14 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         # Variables Initialization
-        #self.time = np.linspace(-2.5, 2.5, 1000)
         self.time = np.linspace(-2,2,2000, endpoint=False)
         self.added_composer_signals=0
         self.added_signals_list=[]
-        # self.added_composer_signals_frequency=[]
         self.signal_index=None
         self.signal_to_delete=None
         self.isOpen = False
         self.noDots = False
+
         # Links of GUI Elements to Methods:
         self.ui.showHidePushButton.setCheckable(True)
         self.ui.actionOpen.triggered.connect(lambda: self.openFile())
@@ -56,10 +54,9 @@ class MainWindow(QMainWindow):
         self.amplitudeReadings = []
         self.ui.savePushButton.clicked.connect(self.save_signal)
         self.ui.confirmPushButton.clicked.connect(self.confirm)
-        # self.timeReadings = np.linspace(-2,2,2000, endpoint=False)
-        # self.amplitudeReadings = 1*np.cos(2 * np.pi * 2 * (self.timeReadings)) + 1*np.cos(2 * np.pi * 6 * (self.timeReadings))
-    # Methods
 
+
+    # Methods
 
     def save_signal(self):
         global signalSumIsPlotted
@@ -88,17 +85,9 @@ class MainWindow(QMainWindow):
 
 
     def plot(self):
-        # self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
-        # self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
-        # self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
-        # self.amplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
-
-        self.ui.mainGraphicsView.setLimits(xMin=np.min(self.timeReadings), xMax=np.max(self.timeReadings), yMin=np.min(self.amplitudeReadings) - 0.2, yMax=np.max(self.amplitudeReadings) + 0.2, minXRange=0.1, maxXRange=np.max(self.timeReadings) - np.min(self.timeReadings), minYRange=0.1, maxYRange=(np.max(self.amplitudeReadings) + 0.2)-((np.min(self.amplitudeReadings) - 0.2)))
-        self.ui.mainGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.amplitudeReadings) - 0.2, np.max(self.amplitudeReadings) + 0.2), padding=0)
-
+        self.setGraphRange(self.ui.mainGraphicsView, self.timeReadings, self.amplitudeReadings)
         self.ui.mainGraphicsView.clear()
         self.ui.mainGraphicsView.plot(self.timeReadings, self.amplitudeReadings, pen=pyqtgraph.mkPen('r', width=1.5))
-        # self.ui.graphicsView.plot(self.TimeReadings, self.AmplitudeReadings, pen=pyqtgraph.mkPen('b', width=1.5), symbol='o', symbolPen ='b', symbolBrush = 0.9)
     
     def InterpolateDataPoints(self,dataPointsToInterpolate, timestepToFindSampleValueAt):
     
@@ -117,8 +106,11 @@ class MainWindow(QMainWindow):
     def ResampleSignal(self,timeReadings, amplitudeReadings, maximumFrequencyRatio):
 
         maximumFrequencyComponent = self.GetMaximumFrequencyComponent(timeReadings, amplitudeReadings)
+        #* ts step of sampling
         samplingInterval = abs(1/(maximumFrequencyRatio * maximumFrequencyComponent))
+        #
         signalTimeInterval = timeReadings[-1]
+        #* list of sampling time
         samplingTime = np.arange(-signalTimeInterval, signalTimeInterval, samplingInterval)
         resampledAmplitude = []
         for currentTimestep in samplingTime:
@@ -138,8 +130,7 @@ class MainWindow(QMainWindow):
         resampledAmplitude, samplingInterval = self.ResampleSignal(timeReadings, amplitudeReadings, maximumFrequencyRatio)
         reconstructedAmplitude = [resampledAmplitude[discreteTimestep] * sinc( (timeReadings - discreteTimestep*samplingInterval) / samplingInterval ) for discreteTimestep in range(-len(resampledAmplitude), len(resampledAmplitude))]
         reconstructedAmplitude = np.sum(reconstructedAmplitude, axis=0)
-        self.ui.reconstrucedGraphicsView.setLimits(xMin=np.min(self.timeReadings), xMax=np.max(self.timeReadings), yMin=np.min(reconstructedAmplitude) - 0.2, yMax=np.max(reconstructedAmplitude) + 0.2, minXRange=0.1, maxXRange=np.max(self.timeReadings) - np.min(self.timeReadings), minYRange=0.1, maxYRange=(np.max(reconstructedAmplitude) + 0.2)-((np.min(reconstructedAmplitude) - 0.2)))
-        self.ui.reconstrucedGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(reconstructedAmplitude) - 0.2, np.max(reconstructedAmplitude) + 0.2), padding=0)
+        self.setGraphRange(self.ui.reconstrucedGraphicsView, self.timeReadings, reconstructedAmplitude)
         self.ui.reconstrucedGraphicsView.clear()
         self.ui.reconstrucedGraphicsView.plot(timeReadings, reconstructedAmplitude, pen=pyqtgraph.mkPen('b', width=1.5))
 
@@ -171,8 +162,7 @@ class MainWindow(QMainWindow):
         self.amplitude= float(self.ui.amplitudeDoubleSpinBox.text()) 
         self.phase_shift= float(self.ui.phaseShiftDoubleSpinBox.text()) * (np.pi/180)
         self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
-        self.ui.composerGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.signal), yMin=np.min(self.signal) - 0.2, yMax=np.max(self.signal) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.signal) + 0.2)-((np.min(self.signal) - 0.2)))
-        self.ui.composerGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.signal) - 0.2, np.max(self.signal) + 0.2), padding=0)
+        self.setGraphRange(self.ui.composerGraphicsView, self.time, self.signal)
         self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
         SignalsCounter = SignalsCounter + 1
         composedSignalIsPlotted= True
@@ -181,21 +171,15 @@ class MainWindow(QMainWindow):
         global signalSumIsPlotted
         if composedSignalIsPlotted == True:
             self.added_composer_signals+=self.signal
-            #frequency stored in a list for later sampling
-            # self.added_composer_signals_frequency.append(self.frequency)
+            #* Frequency stored in a list for later sampling
             self.added_signals_list.append(self.signal)
             self.ui.deleteSignalComboBox.addItem('F='+ str(self.frequency)+ 'A=' +str(self.amplitude) + 'PS='+ str(self.phase_shift))
-            self.ui.summationGraphicsView.clear() #adjust it to the right graph
-            # self.ui.graphicsView_4.plot(self.time, signal1+signal2, pen=pyqtgraph.mkPen('r', width=1.5))
-            self.ui.summationGraphicsView.setLimits(xMin=np.min(self.time), xMax=np.max(self.time), yMin=np.min(self.added_composer_signals) - 0.2, yMax=np.max(self.added_composer_signals) + 0.2, minXRange=0.1, maxXRange=np.max(self.time) - np.min(self.time), minYRange=0.1, maxYRange=(np.max(self.added_composer_signals) + 0.2)-((np.min(self.added_composer_signals) - 0.2)))
-            self.ui.summationGraphicsView.setRange(xRange=(-2, 2), yRange=(np.min(self.added_composer_signals) - 0.2, np.max(self.added_composer_signals) + 0.2), padding=0)
+            self.ui.summationGraphicsView.clear() #* adjust it to the right graph
+            self.setGraphRange(self.ui.summationGraphicsView, self.time, self.added_composer_signals)
             self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
             signalSumIsPlotted= True
         elif composedSignalIsPlotted== False: 
             self.show_pop_up_msg("No Signal is Plotted! ")
-
-        #get maximum frequency for sampling
-        # maximum_frequency=np.max(self.added_composer_signals_frequency)
 
     def select_signal(self):
         self.signal_index=self.ui.deleteSignalComboBox.currentIndex()
@@ -207,7 +191,6 @@ class MainWindow(QMainWindow):
         else:
             self.ui.summationGraphicsView.clear()
             self.signal_to_delete=self.added_signals_list.pop(self.signal_index)
-            # self.added_composer_signals_frequency.pop(self.signal_index)
             self.ui.deleteSignalComboBox.removeItem(self.signal_index)
             if self.ui.deleteSignalComboBox.count()==0:
                 self.added_composer_signals = 0
@@ -224,6 +207,9 @@ class MainWindow(QMainWindow):
         msg.setText(the_message)
         show= msg.exec_()
 
+    def setGraphRange(self, graphicsViewName, time, amplitude):
+        graphicsViewName.setLimits(xMin=np.min(time), xMax=np.max(time), yMin=np.min(amplitude) - 0.2, yMax=np.max(amplitude) + 0.2, minXRange=0.1, maxXRange=np.max(time) - np.min(time), minYRange=0.1, maxYRange=(np.max(amplitude) + 0.2)-((np.min(amplitude) - 0.2)))
+        graphicsViewName.setRange(xRange=(-2, 2), yRange=(np.min(amplitude) - 0.2, np.max(amplitude) + 0.2), padding=0)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MainWindow()
