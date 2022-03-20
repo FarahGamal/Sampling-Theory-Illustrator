@@ -149,7 +149,7 @@ class MainWindow(QMainWindow):
             self.plot()
             return
         maximumFrequencyRatio = round(sliderValue/3, 3)
-        self.ui.maximumFrequencyLabel.setText(f'{int(maximumFrequencyRatio)} fmax')
+        self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
         self.ReconstructSignal(self.timeReadings, self.amplitudeReadings, maximumFrequencyRatio)
 
     def showHideGraph(self):
