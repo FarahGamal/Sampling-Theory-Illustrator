@@ -129,7 +129,8 @@ class MainWindow(QMainWindow):
             resampledAmplitude.append(sampleValue)
         self.ui.mainGraphicsView.clear()
         self.ui.mainGraphicsView.plot(self.timeReadings, self.amplitudeReadings, pen=pyqtgraph.mkPen('r', width=1.5))
-        self.ui.mainGraphicsView.plot(samplingTime, resampledAmplitude, pen=pyqtgraph.mkPen('b', width=0.001), symbol='o', symbolPen ='b', symbolBrush = 0.9)
+        self.ui.mainGraphicsView.plot(samplingTime, resampledAmplitude, pen=pyqtgraph.mkPen('g', width=1.5, style=QtCore.Qt.DashLine), symbol='o', symbolPen ='b', symbolBrush = 0.9)
+
         return resampledAmplitude, samplingInterval
 
     def ReconstructSignal(self,timeReadings, amplitudeReadings, maximumFrequencyRatio):
