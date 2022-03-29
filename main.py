@@ -1,23 +1,28 @@
-import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
+########## Imports ##########
+
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import scipy.fft
+import operator
 import pyqtgraph
-from pyqtgraph import PlotWidget
+import numpy as np
 import pandas as pd
 from GUI import Ui_MainWindow
-import csv
-import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import signal
 from scipy.special import sinc
-import math
-import scipy
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-SignalsCounter = -1
-composedSignalIsPlotted= False
-signalSumIsPlotted= False
+
+########## Global Variables Initialization ##########
+
+composedSignalsCounter = -1
+isComposerPlotNotEmpty, isSummedSinusoidalsPlotNotEmpty = False, False
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------- #
+
+                                                        ########## Class Definition ##########
 
 class MainWindow(QMainWindow):
 
@@ -26,198 +31,219 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        # Variables Initialization
-        self.time = np.linspace(-2,2,2000, endpoint=False)
-        self.added_composer_signals=0
-        self.added_signals_list=[]
-        self.signal_index=None
-        self.signal_to_delete=None
-        self.isOpen = False
-        self.noDots = False
+        ########## Class Attributes Initialization ##########
 
-        # Links of GUI Elements to Methods:
+        self.isMainPlotNotEmpty = False
+        self.summedComposerSinusoidals, self.summedSinusoidalsList = 0, []
+        self.composedSinusoidalIndex, self.sinusoidalToDelete = None, None
+        self.readSignalTimeReadings, self.readSignalAmplitudeReadings = [], []
+        self.minimumVisibleX, self.maximumVisibleX, self.viewRangePadding, self.pointsNumberInSignal = -2, 2, 0.2, 1000
+        self.applicationTimeAxis = np.linspace(self.minimumVisibleX, self.maximumVisibleX, self.pointsNumberInSignal, endpoint=False)
+
+        ########## Links of GUI Elements to Methods ##########
+
         self.ui.showHidePushButton.setCheckable(True)
-        self.ui.actionOpen.triggered.connect(lambda: self.openFile())
-        self.ui.showHidePushButton.clicked.connect(lambda: self.showHideGraph())
-        self.ui.plotPushButton.clicked.connect(self.signal_composer)
-        self.ui.addPushButton.clicked.connect(self.signal_summation)
-        self.ui.deletePushButton.clicked.connect(self.signal_deletion)
-        self.ui.deleteSignalComboBox.activated.connect(self.select_signal)
         self.ui.samplingHorizontalSlider.setMinimum(0)
         self.ui.samplingHorizontalSlider.setMaximum(9)
+        self.ui.plotPushButton.clicked.connect(self.SignalComposer)
         self.ui.mainGraphicsView.showGrid(x=True, y=True, alpha=0.5)
-        self.ui.reconstrucedGraphicsView.showGrid(x=True, y=True, alpha=0.5)
+        self.ui.actionOpen.triggered.connect(lambda: self.OpenFile())
+        self.ui.addPushButton.clicked.connect(self.SinuoidalsSummation)
+        self.ui.deletePushButton.clicked.connect(self.DeleteSinusoidal)
+        self.ui.savePushButton.clicked.connect(self.SaveSyntheticSignal)
         self.ui.composerGraphicsView.showGrid(x=True, y=True, alpha=0.5)
         self.ui.summationGraphicsView.showGrid(x=True, y=True, alpha=0.5)
+        self.ui.reconstrucedGraphicsView.showGrid(x=True, y=True, alpha=0.5)
+        self.ui.confirmPushButton.clicked.connect(self.ComposerConfirmButtonAction)
+        self.ui.deleteSignalComboBox.activated.connect(self.SelectSinusoidalToDelete)
+        self.ui.showHidePushButton.clicked.connect(lambda: self.ShowHideGraphButtonAction())
         self.ui.samplingHorizontalSlider.valueChanged.connect( self.ResampleAndReconstructSignalBasedOnSliderValue)
-        self.timeReadings = []
-        self.amplitudeReadings = []
-        self.ui.savePushButton.clicked.connect(self.save_signal)
-        self.ui.confirmPushButton.clicked.connect(self.confirm)
 
+    # ---------------------------------------------------------------------------------------------------------------------------------------------- #
 
-    # Methods
+                                                        ########## Class Methods ##########
 
-    def save_signal(self):
-        global signalSumIsPlotted
-        if signalSumIsPlotted==False:
-            self.show_pop_up_msg("No Signal to Save! ")  
-        else:    
-            SavedSignal = np.asarray([self.time,sum(self.added_signals_list)])
-            np.savetxt('Synthetic Signal '+str(SignalsCounter)+'.csv', SavedSignal.T,header="t,x", delimiter=",")
-    
-    def reset_slider_and_graph(self):
-        self.ui.reconstrucedGraphicsView.clear()
-        self.ui.samplingHorizontalSlider.setValue(0)
+                                                ###### Sampling & Reconstruction Partition: ######
 
-    def openFile(self):
-        self.reset_slider_and_graph()
-        self.file_name = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
-        self.data_frame = pd.read_csv(self.file_name, encoding = 'utf-8').fillna(0)
-        self.timeReadings = self.data_frame.iloc[:,0].to_numpy()
-        self.amplitudeReadings = self.data_frame.iloc[:,1].to_numpy()
-        self.plot()
-        self.isOpen = True
+    #### Main Methods ####
 
-    def confirm(self):
-        if signalSumIsPlotted==False:
-            self.show_pop_up_msg("No Signal to Sample! ")
-        else:
-            self.timeReadings = self.time
-            self.amplitudeReadings = self.added_composer_signals
-            self.plot()
-            self.isOpen = True
-            self.reset_slider_and_graph()
-            self.ui.maximumFrequencyLabel.setText('0 fmax')
+    # Loading any Signal File into Application on Main Graph
+    def OpenFile(self):
+        self.ResetSliderAndMainGraph()
+        self.fileName = QtWidgets.QFileDialog.getOpenFileName(caption="Choose Signal", directory="", filter="csv (*.csv)")[0]
+        if  self.fileName:
+            self.loadedDataFrame = pd.read_csv(self.fileName, encoding = 'utf-8').fillna(0)
+            self.ReadAndPlotMainSignal(self.loadedDataFrame.iloc[:,0].to_numpy(), self.loadedDataFrame.iloc[:,1].to_numpy())
 
+    # Getting Slider Value (Sampling Ratio) from User Interaction for Sampling and Reconstruction
+    def ResampleAndReconstructSignalBasedOnSliderValue(self,sliderValue):
+        if self.isMainPlotNotEmpty == False: return
+        if sliderValue == 0:
+            self.ui.reconstrucedGraphicsView.clear()
+            self.ui.maximumFrequencyLabel.setText('0 Fmax')
+            self.PlotAnySignal(self.ui.mainGraphicsView, self.readSignalTimeReadings, self.readSignalAmplitudeReadings, 'r', 1.5, None, None, None, None, False)
+            return
+        maximumFrequencyRatio = round(sliderValue/3, 3)
+        self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} Fmax')
+        self.ReconstructSignal(self.readSignalTimeReadings, self.readSignalAmplitudeReadings, maximumFrequencyRatio)
 
-    def plot(self):
-        self.setGraphRange(self.ui.mainGraphicsView, self.timeReadings, self.amplitudeReadings)
-        self.ui.mainGraphicsView.clear()
-        self.ui.mainGraphicsView.plot(self.timeReadings, self.amplitudeReadings, pen=pyqtgraph.mkPen('r', width=1.5))
-    
-    def InterpolateDataPoints(self,dataPointsToInterpolate, timestepToFindSampleValueAt):
-    
-        sampleValue = dataPointsToInterpolate[0][1] + ( timestepToFindSampleValueAt - dataPointsToInterpolate[0][0] ) * ( (dataPointsToInterpolate[1][1] - dataPointsToInterpolate[0][1] ) / ( dataPointsToInterpolate[1][0] - dataPointsToInterpolate[0][0] ) )
-        return sampleValue[0]
+    #### Helper Methods ####
 
-    def GetMaximumFrequencyComponent(self,timeReadings, amplitudeReadings):
-    
+    # Transforming Signal to Frequency Domain to Capture Value of Maximum Frequency
+    def GetMaximumFrequencyComponent(self, timeReadings, amplitudeReadings):
         magnitudes = np.abs(scipy.fft.rfft(amplitudeReadings))/np.max(np.abs(scipy.fft.rfft(amplitudeReadings)))
         frequencies = scipy.fft.rfftfreq(len(timeReadings), (timeReadings[1] - timeReadings[0]))
         for index, frequency in enumerate(frequencies):
-            if magnitudes[index] >= 0.05:
-                fmax = frequencies[index]
-        return round(fmax)
+            if magnitudes[index] >= 0.05: maximumFrequency = frequency
+        return round(maximumFrequency)
 
-    def ResampleSignal(self,timeReadings, amplitudeReadings, maximumFrequencyRatio):
+    # Getting Smaller/Larger-Valued Samples with Respect to Targetted Sample to be Generated
+    def GetNearestTimestepAndAmplitude(self, timeReadings, amplitudeReadings, currentTimestep, operator, getExtremeMethod):
+        NearestTimestep = getattr(timeReadings[operator(timeReadings, currentTimestep)], getExtremeMethod)()
+        return NearestTimestep, amplitudeReadings[np.where(timeReadings == NearestTimestep)]
 
+    # Mathematical Linear Interpolation
+    def InterpolateDataPoints(self, dataPointsToInterpolate, timestepToFindSampleValueAt):
+        sampleValue = dataPointsToInterpolate[0][1] + ( timestepToFindSampleValueAt - dataPointsToInterpolate[0][0] ) * ( (dataPointsToInterpolate[1][1] - dataPointsToInterpolate[0][1] ) / ( dataPointsToInterpolate[1][0] - dataPointsToInterpolate[0][0] ) )
+        return sampleValue[0]
+
+    # Using Mathematical Linear Interpolation to Generate Samples According to Chosen Sampling Frequency
+    def ResampleSignal(self, timeReadings, amplitudeReadings, maximumFrequencyRatio):
         maximumFrequencyComponent = self.GetMaximumFrequencyComponent(timeReadings, amplitudeReadings)
-        #* ts step of sampling
         samplingInterval = abs(1/(maximumFrequencyRatio * maximumFrequencyComponent))
-        #
-        signalTimeInterval = timeReadings[-1]
-        #* list of sampling time
+        signalTimeInterval, resampledAmplitude = timeReadings[-1], []
         samplingTime = np.arange(-signalTimeInterval, signalTimeInterval, samplingInterval)
-        resampledAmplitude = []
         for currentTimestep in samplingTime:
-            nearestSmallerTimestep = timeReadings[timeReadings < currentTimestep].max()
-            nearestSmallerAmplitude = amplitudeReadings[np.where(timeReadings == nearestSmallerTimestep)]
-            nearestLargerTimestep = timeReadings[timeReadings > currentTimestep].min() 
-            nearestLargerAmplitude = amplitudeReadings[np.where(timeReadings == nearestLargerTimestep)]
+            nearestSmallerTimestep, nearestSmallerAmplitude = self.GetNearestTimestepAndAmplitude(timeReadings, amplitudeReadings, currentTimestep, operator.lt, "max")
+            nearestLargerTimestep, nearestLargerAmplitude = self.GetNearestTimestepAndAmplitude(timeReadings, amplitudeReadings, currentTimestep, operator.gt, "min")
             sampleValue = self.InterpolateDataPoints([[nearestSmallerTimestep, nearestSmallerAmplitude],[nearestLargerTimestep, nearestLargerAmplitude]], currentTimestep)
             resampledAmplitude.append(sampleValue)
-        self.ui.mainGraphicsView.clear()
-        self.ui.mainGraphicsView.plot(self.timeReadings, self.amplitudeReadings, pen=pyqtgraph.mkPen('r', width=1.5))
-        self.ui.mainGraphicsView.plot(samplingTime, resampledAmplitude, pen=pyqtgraph.mkPen('g', width=1.5, style=QtCore.Qt.DashLine), symbol='o', symbolPen ='b', symbolBrush = 0.9)
-
+        self.PlotAnySignal(self.ui.mainGraphicsView, timeReadings, amplitudeReadings, 'r', 1.5, None, None, None, None, False)
+        self.PlotAnySignal(self.ui.mainGraphicsView, samplingTime, resampledAmplitude, 'g', 0.001, None, 'o', 'g', 0.9, True)
         return resampledAmplitude, samplingInterval
 
-    def ReconstructSignal(self,timeReadings, amplitudeReadings, maximumFrequencyRatio):
-
+    # Applying Sinc Interpolation Reconstruction to Samples and Plotting it in Secondary Graph
+    def ReconstructSignal(self, timeReadings, amplitudeReadings, maximumFrequencyRatio):
         resampledAmplitude, samplingInterval = self.ResampleSignal(timeReadings, amplitudeReadings, maximumFrequencyRatio)
         reconstructedAmplitude = [resampledAmplitude[discreteTimestep] * sinc( (timeReadings - discreteTimestep*samplingInterval) / samplingInterval ) for discreteTimestep in range(-len(resampledAmplitude), len(resampledAmplitude))]
         reconstructedAmplitude = np.sum(reconstructedAmplitude, axis=0)
-        self.setGraphRange(self.ui.reconstrucedGraphicsView, self.timeReadings, reconstructedAmplitude)
-        self.ui.reconstrucedGraphicsView.clear()
-        self.ui.reconstrucedGraphicsView.plot(timeReadings, reconstructedAmplitude, pen=pyqtgraph.mkPen('b', width=1.5))
+        self.PlotAnySignal(self.ui.reconstrucedGraphicsView, timeReadings, reconstructedAmplitude, 'b', 1.5, None, None, None, None, False)
+        self.PlotAnySignal(self.ui.mainGraphicsView, timeReadings, reconstructedAmplitude, 'g', 1.5, QtCore.Qt.DotLine, None, None, None, True)
 
-    def ResampleAndReconstructSignalBasedOnSliderValue(self,sliderValue):
-        if self.isOpen == False: return
-        if sliderValue == 0:
-            self.ui.reconstrucedGraphicsView.clear()
-            self.ui.maximumFrequencyLabel.setText('0 fmax')
-            self.plot()
-            return
-        maximumFrequencyRatio = round(sliderValue/3, 3)
-        self.ui.maximumFrequencyLabel.setText(f'{maximumFrequencyRatio} fmax')
-        self.ReconstructSignal(self.timeReadings, self.amplitudeReadings, maximumFrequencyRatio)
+    # Executing Show or Hide Method on Secondary Graph Related UI Elements
+    def ReconstructedSignalGraphShowHideControl(self, displayMethod):
+        getattr(self.ui.reconstrucedGraphicsView, displayMethod)()
+        getattr(self.ui.reconstructedSignalGraphLabel, displayMethod)()
 
-    def showHideGraph(self):
-        if self.ui.showHidePushButton.isChecked():
-            self.ui.reconstrucedGraphicsView.hide()
-            self.ui.reconstructedSignalGraphLabel.hide()
+    # Showing or Hiding Secondary Graph According to User Input
+    def ShowHideGraphButtonAction(self):
+        if self.ui.showHidePushButton.isChecked(): self.ReconstructedSignalGraphShowHideControl("hide")
+        else: self.ReconstructedSignalGraphShowHideControl("show")
+
+    # --------------------------------------------------------------------------------------------------------------------------------------------- #
+
+                                                            ###### Sinusoidals Composer Partition: ######
+
+    #### Main Methods ####
+
+    # Constructing User-Defined Sinusoidal and Plotting it
+    def SignalComposer(self):
+        global composedSignalsCounter; global isComposerPlotNotEmpty
+        self.frequency, self.amplitude, self.phaseShift = self.GetComposedSignalParameterFromUser(self.ui.frequencyDoubleSpinBox, 1), self.GetComposedSignalParameterFromUser(self.ui.amplitudeDoubleSpinBox, 1), self.GetComposedSignalParameterFromUser(self.ui.phaseShiftDoubleSpinBox, (np.pi/180))
+        self.composedSinusoidal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.applicationTimeAxis + self.phaseShift)
+        self.PlotAnySignal(self.ui.composerGraphicsView, self.applicationTimeAxis, self.composedSinusoidal, 'r', 1.5, None, None, None, None, False)
+        composedSignalsCounter += 1
+        isComposerPlotNotEmpty = True
+
+    # Summing Composed Sinusoidal to others Being Plotted
+    def SinuoidalsSummation(self):
+        global isSummedSinusoidalsPlotNotEmpty
+        if isComposerPlotNotEmpty == True:
+            self.summedComposerSinusoidals += self.composedSinusoidal
+            self.summedSinusoidalsList.append(self.composedSinusoidal)
+            self.ui.deleteSignalComboBox.addItem(str(self.amplitude) + ' * cos ( ' + str(self.frequency) + 't + ' + str(self.phaseShift) + ' )')
+            self.PlotAnySignal(self.ui.summationGraphicsView, self.applicationTimeAxis, self.summedComposerSinusoidals, 'r', 1.5, None, None, None, None, False)
+            isSummedSinusoidalsPlotNotEmpty= True
+        elif isComposerPlotNotEmpty == False: self.ShowPopUpMessage("No Signal is Plotted!      ")
+
+    # Getting Selected Sinusoidal from User to be Deleted
+    def SelectSinusoidalToDelete(self):
+        self.composedSinusoidalIndex = self.ui.deleteSignalComboBox.currentIndex()
+
+    # Deleting a User Selected Sinusoidal Component After Summtion
+    def DeleteSinusoidal(self):
+        global isSummedSinusoidalsPlotNotEmpty
+        if isSummedSinusoidalsPlotNotEmpty == False:self.ShowPopUpMessage("No Signal to Delete!      ")
         else:
-            self.ui.reconstrucedGraphicsView.show()
-            self.ui.reconstructedSignalGraphLabel.show()
-
-    def signal_composer(self):
-        global SignalsCounter
-        global composedSignalIsPlotted
-        global SignalsCounter
-        self.ui.composerGraphicsView.clear()
-        self.frequency= float(self.ui.frequencyDoubleSpinBox.text())
-        self.amplitude= float(self.ui.amplitudeDoubleSpinBox.text()) 
-        self.phase_shift= float(self.ui.phaseShiftDoubleSpinBox.text()) * (np.pi/180)
-        self.signal = self.amplitude * np.cos(2 * np.pi * self.frequency * self.time + self.phase_shift)
-        self.setGraphRange(self.ui.composerGraphicsView, self.time, self.signal)
-        self.ui.composerGraphicsView.plot(self.time, self.signal, pen=pyqtgraph.mkPen('r', width=1.5))
-        SignalsCounter = SignalsCounter + 1
-        composedSignalIsPlotted= True
-
-    def signal_summation(self):
-        global signalSumIsPlotted
-        if composedSignalIsPlotted == True:
-            self.added_composer_signals+=self.signal
-            #* Frequency stored in a list for later sampling
-            self.added_signals_list.append(self.signal)
-            self.ui.deleteSignalComboBox.addItem('F='+ str(self.frequency)+ 'A=' +str(self.amplitude) + 'PS='+ str(self.phase_shift))
-            self.ui.summationGraphicsView.clear() #* adjust it to the right graph
-            self.setGraphRange(self.ui.summationGraphicsView, self.time, self.added_composer_signals)
-            self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
-            signalSumIsPlotted= True
-        elif composedSignalIsPlotted== False: 
-            self.show_pop_up_msg("No Signal is Plotted! ")
-
-    def select_signal(self):
-        self.signal_index=self.ui.deleteSignalComboBox.currentIndex()
-
-    def signal_deletion(self):
-        global signalSumIsPlotted
-        if signalSumIsPlotted==False:
-            self.show_pop_up_msg("No Signal to Delete! ")
-        else:
-            self.ui.summationGraphicsView.clear()
-            self.signal_to_delete=self.added_signals_list.pop(self.signal_index)
-            self.ui.deleteSignalComboBox.removeItem(self.signal_index)
-            if self.ui.deleteSignalComboBox.count()==0:
-                self.added_composer_signals = 0
+            self.sinusoidalToDelete=self.summedSinusoidalsList.pop(self.composedSinusoidalIndex)
+            self.ui.deleteSignalComboBox.removeItem(self.composedSinusoidalIndex)
+            if self.ui.deleteSignalComboBox.count() == 0:
+                self.summedComposerSinusoidals = 0
                 self.ui.summationGraphicsView.clear()
-                signalSumIsPlotted= False
+                isSummedSinusoidalsPlotNotEmpty = False
             else:
-                self.added_composer_signals-=self.signal_to_delete
-                self.ui.summationGraphicsView.plot(self.time, self.added_composer_signals, pen=pyqtgraph.mkPen('r', width=1.5))
-                
+                self.summedComposerSinusoidals -= self.sinusoidalToDelete
+                self.PlotAnySignal(self.ui.summationGraphicsView, self.applicationTimeAxis, self.summedComposerSinusoidals, 'r', 1.5, None, None, None, None, False)
 
-    def show_pop_up_msg(self,the_message):
-        msg=QMessageBox()
-        msg.setWindowTitle("ERROR!!")
-        msg.setText(the_message)
-        show= msg.exec_()
+    # Moving Composed Sinusoidals to Sampling and Reconstruction Part of Application
+    def ComposerConfirmButtonAction(self):
+        if isSummedSinusoidalsPlotNotEmpty == False: self.ShowPopUpMessage("No Signal to Sample!      ")
+        else:
+            self.ReadAndPlotMainSignal(self.applicationTimeAxis, self.summedComposerSinusoidals)
+            self.ResetSliderAndMainGraph()
+            self.ui.maximumFrequencyLabel.setText('0 Fmax')
 
-    def setGraphRange(self, graphicsViewName, time, amplitude):
-        graphicsViewName.setLimits(xMin=np.min(time), xMax=np.max(time), yMin=np.min(amplitude) - 0.2, yMax=np.max(amplitude) + 0.2, minXRange=0.1, maxXRange=np.max(time) - np.min(time), minYRange=0.1, maxYRange=(np.max(amplitude) + 0.2)-((np.min(amplitude) - 0.2)))
-        graphicsViewName.setRange(xRange=(-2, 2), yRange=(np.min(amplitude) - 0.2, np.max(amplitude) + 0.2), padding=0)
+    # Saving Composed Sinusoidals in Same Directory
+    def SaveSyntheticSignal(self):
+        global isSummedSinusoidalsPlotNotEmpty
+        if isSummedSinusoidalsPlotNotEmpty == False: self.ShowPopUpMessage("No Signal to Save!      ")  
+        else:
+            SavedSignal = np.asarray([self.applicationTimeAxis, sum(self.summedSinusoidalsList)])
+            np.savetxt('Synthetic Signal '+str(composedSignalsCounter)+'.csv', SavedSignal.T, header="t,x", delimiter=",")
+
+    #### Helper Methods ####
+
+    # Getting Sinusoidal Component Parameters from User and Assigning them
+    def GetComposedSignalParameterFromUser(self, signalParameterSpinBox, parameterScaleValue):
+        return float( getattr(signalParameterSpinBox, "text")() ) * parameterScaleValue
+    
+    # Showing an Error Message for Handling Invalid User Actions
+    def ShowPopUpMessage(self, popUpMessage):
+        messageBoxElement = QMessageBox()
+        messageBoxElement.setWindowTitle("ERROR!")
+        messageBoxElement.setText(popUpMessage)
+        execute = messageBoxElement.exec_()
+
+    # -------------------------------------------------------------------------------------------------------------------------------------------- #
+
+                                                                        ###### General Helper Functions: ######
+
+    # Setting Limits and Visible Range of any Graph in Application
+    def setGraphRange(self, plotWidget, timeReadings, amplitudeReadings):
+        plotWidget.setLimits(xMin=np.min(timeReadings), xMax=np.max(timeReadings), yMin=np.min(amplitudeReadings) - self.viewRangePadding, yMax=np.max(amplitudeReadings) + self.viewRangePadding, minXRange = self.viewRangePadding * 0.5, maxXRange=np.max(timeReadings) - np.min(timeReadings), minYRange = self.viewRangePadding * 0.5, maxYRange=(np.max(amplitudeReadings) + self.viewRangePadding)-((np.min(amplitudeReadings) - self.viewRangePadding)))
+        plotWidget.setRange(xRange=(self.minimumVisibleX, self.maximumVisibleX), yRange=(np.min(amplitudeReadings) - self.viewRangePadding, np.max(amplitudeReadings) + self.viewRangePadding), padding=0)
+
+    # Plotting any Signal or Sinusoidal in Applicatiom
+    def PlotAnySignal(self, plotWidget, timeReadings, amplitudeReadings, penColor, penWidth, penStyle, symbol, symbolPen, symbolBrush, secondPlot):
+        if not secondPlot: self.setGraphRange(plotWidget, timeReadings, amplitudeReadings); plotWidget.clear()
+        plotWidget.plot(timeReadings, amplitudeReadings, pen=pyqtgraph.mkPen(penColor, width=penWidth, style=penStyle), symbol=symbol, symbolPen=symbolPen, symbolBrush=symbolBrush)
+
+    # Assigning Time and Amplitude Readings to their Class Attributes to be Plotted on Main Graph
+    def ReadAndPlotMainSignal(self, timeReadings, amplitudeReadings):
+        self.readSignalTimeReadings = timeReadings
+        self.readSignalAmplitudeReadings = amplitudeReadings
+        self.PlotAnySignal(self.ui.mainGraphicsView, self.readSignalTimeReadings, self.readSignalAmplitudeReadings, 'r', 1.5, None, None, None, None, False)
+        self.isMainPlotNotEmpty = True
+
+    # Resetting Slider and Clearing Main Graph
+    def ResetSliderAndMainGraph(self):
+        self.ui.reconstrucedGraphicsView.clear()
+        self.ui.samplingHorizontalSlider.setValue(0)
+
+    # --------------------------------------------------------------------------------------------------------------------------------------------- #
+
+########## Application Main ##########
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MainWindow()
